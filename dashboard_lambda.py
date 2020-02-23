@@ -124,11 +124,11 @@ def add_metrics_to_widget(metrics, widget, widgets):
 
 
 def set_dashboard_names(dashboard_name, env):
-    if env == "dev" or "stg" or "prd" or "hld":
-        dashboard_name = env + "_LogAggregator"
+    if env == "dev" or "stg" or "prd":
+        dashboard_name = env + "_SampleGroup"
     else:
         sys.exit(
-            'Please enter a valid environment(dev, stg, prd, hld "Shared Tools")'
+            'Please enter a valid environment(dev, stg, prd)'
         )
     return dashboard_name
 
@@ -164,7 +164,7 @@ def lambda_handler(event, context):
         },
         {
             "Name": "tag:group",
-            "Values": ["log-aggregator"]
+            "Values": ["sample-group"]
         },
     ])
     """Merge each instance metrics in one widget"""
