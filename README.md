@@ -1,6 +1,12 @@
 # cloudwatch_lambda
 Create CloudWatch Metrics monitor by AutoScaling
 
+[![Language](http://img.shields.io/badge/language-Python3.6-brightgreen.svg?style=flat
+)](https://www.python.org/)
+[![License](http://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat
+)](http://mit-license.org)
+[![Twitter](https://img.shields.io/badge/twitter-@sista05-blue.svg?style=flat)](http://twitter.com/sista05)
+
 ##  🚨alarm_lambda
 
 Automatically set or delete CW alarm when EC2 targeted for autoscale is Launch or Terminate.
