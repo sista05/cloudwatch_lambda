@@ -80,7 +80,7 @@ Next implementation.
 |ENV|dev\|stg\|prd|
 
 ### Dashboard image
-TBD
+![screenshot.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/244490/912e968a-ef67-d2b9-a625-0aef7b60341f.png)
 
 ### IAM Policy
 
