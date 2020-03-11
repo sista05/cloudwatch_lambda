@@ -1,9 +1,10 @@
 import boto3
 import os
 
-cloudWatch = boto3.client('cloudwatch')
-ec2 = boto3.resource('ec2')
 alarm_topic = os.environ['ALARM_TOPIC']
+
+cloudwatch = boto3.client('cloudwatch')
+ec2 = boto3.resource('ec2')
 
 failed_system = {
     "OKActions": [alarm_topic],
@@ -89,44 +90,40 @@ burst_balance = {
     "TreatMissingData": "missing"
 }
 
-
 def put_alarm(instance_name, instance_id, vol_id, **kwargs):
-    """set alarm"""
+    """set alarms"""
     kwargs["AlarmName"] = instance_name + "-" + \
         instance_id + "-" + kwargs["MetricName"]
-
     if(kwargs["MetricName"] == 'disk_used_percent'):
         kwargs["Dimensions"] = [
             {"Name": "InstanceId", "Value": instance_id},
             {'Name': 'fstype', 'Value': 'xfs'},
             {'Name': 'path', 'Value': '/'}
         ]
-    elif(kwargs["MetricName"] == 'burst_balance'):
+    elif(kwargs["MetricName"] == 'BurstBalance'):
         kwargs["Dimensions"] = [{"Name": "VolumeId", "Value": vol_id}]
     else:
         kwargs["Dimensions"] = [{"Name": "InstanceId", "Value": instance_id}]
-
-    cloudWatch.put_metric_alarm(**kwargs)
-    print(f"put alarm {kwargs['AlarmName']}")
+    print("put_metric_alarm:", kwargs)
+    response = cloudwatch.put_metric_alarm(**kwargs)
+    print("response:", response)
 
 def delete_alarm(instance_name, instance_id):
-
-    alarms = []
-    prefix_name = instance_name + "-" + instance_id
-    for alarm in cloudWatch.describe_alarms(AlarmNamePrefix=prefix_name)['MetricAlarms']:
-        alarms.append(alarm['AlarmName'])
-
-    cloudWatch.delete_alarms(AlarmNames=alarms)
-    [print(f"delete alarm {alarm}") for alarm in alarms]
-
+    """delete alarms"""
+    prefix_name = instance_name + "-" + instance_id + "-"
+    alarms = cloudwatch.describe_alarms(
+        AlarmNamePrefix=prefix_name)['MetricAlarms']
+    print("delete_alarms:", [alarm['AlarmName'] for alarm in alarms])
+    response = cloudwatch.delete_alarms(
+        AlarmNames=[alarm['AlarmName'] for alarm in alarms])
+    print("response:", response)
+    
 def lambda_handler(event, context):
-
     instance_id = event['detail']['EC2InstanceId']
     instance_name = event['detail']['AutoScalingGroupName']
-
     if(event['detail-type'] == 'EC2 Instance Launch Successful'):
-        vol_id = ec2.Instance(instance_id).block_device_mappings[0]['Ebs']['VolumeId']
-
+        vol_id = ec2.Instance(
+            instance_id).block_device_mappings[0]['Ebs']['VolumeId']
         # In case launching EC2 at ScaleOut.
         put_alarm(instance_name, instance_id, vol_id, **failed_system)
         put_alarm(instance_name, instance_id, vol_id, **failed_instance)
@@ -134,7 +131,6 @@ def lambda_handler(event, context):
         put_alarm(instance_name, instance_id, vol_id, **disk_used_percent)
         put_alarm(instance_name, instance_id, vol_id, **mem_used_percent)
         put_alarm(instance_name, instance_id, vol_id, **burst_balance)
-
     if(event['detail-type'] == 'EC2 Instance Terminate Successful'):
         # In case Terminate EC2 at ScaleIn.
         delete_alarm(instance_name, instance_id)
