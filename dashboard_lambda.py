@@ -43,7 +43,7 @@ memory_widget = {
 network_widget = {
     "type": "metric",
     "x": x,
-    "y": y,
+    "y": y + 6,
     "width": width,
     "height": height,
     "properties": {
@@ -59,7 +59,7 @@ network_widget = {
 diskspace_widget = {
     "type": "metric",
     "x": x + 12,
-    "y": y,
+    "y": y + 6,
     "width": width,
     "height": height,
     "properties": {
@@ -75,7 +75,7 @@ diskspace_widget = {
 ebsread_widget = {
     "type": "metric",
     "x": x,
-    "y": y,
+    "y": y + 12,
     "width": width,
     "height": height,
     "properties": {
@@ -91,7 +91,7 @@ ebsread_widget = {
 ebswrite_widget = {
     "type": "metric",
     "x": x + 12,
-    "y": y,
+    "y": y + 12,
     "width": width,
     "height": height,
     "properties": {
@@ -104,7 +104,6 @@ ebswrite_widget = {
     },
 }
 
-
 def update(metrics, widget):
     """Update value of a netsted dictionary of varyinf depth."""
     for key, value in metrics.items():
@@ -114,36 +113,23 @@ def update(metrics, widget):
             widget[key] = value
     return widget
 
-
 def add_metrics_to_widget(metrics, widget, widgets):
     update({"properties": {"metrics": metrics}}, widget)
+    print("add widget:", widget)
     widgets.append(widget)
-    print(f"add widget {widget['properties']['title']}")
     return widgets
-
-
-def set_dashboard_names(dashboard_name, env):
-    if env == "dev" or "stg" or "prd":
-        dashboard_name = env + "_SampleGroup"
-    else:
-        sys.exit(
-            'Please enter a valid environment(dev, stg, prd)'
-        )
-    return dashboard_name
-
 
 def create_or_update_dashboard(dashboard_name, widgets):
     dashboard_body = json.dumps({"widgets": widgets})
-    cloudwatch.put_dashboard(DashboardName=dashboard_name,
-                             DashboardBody=dashboard_body)
-    print(f"add dashboard {dashboard_name}")
+    print("put_dashboard:", widgets)
+    response = cloudwatch.put_dashboard(DashboardName=dashboard_name,
+                                        DashboardBody=dashboard_body)
+    print("response:", response)
 
 def delete_dashboard(dashboard_name):
-    for dashboard in cloudwatch.list_dashboards(
-            DashboardNamePrefix=dashboard_name)["DashboardEntries"]:
-        cloudwatch.delete_dashboards(
-            DashboardNames=[dashboard["DashboardName"]])
-        print(f"delete dashboard {dashboard['DashboardName']}")
+    print("delete_dashboard:", dashboard_name)
+    response = cloudwatch.delete_dashboards(DashboardNames=[dashboard_name])
+    print("response:", response)
 
 def lambda_handler(event, context):
     dashboard_name = ""
@@ -155,7 +141,7 @@ def lambda_handler(event, context):
     metrics_ebswrite = []
     metrics_diskspace = []
     asname_element = event["detail"]["AutoScalingGroupName"].split("-")
-    dashboard_name = set_dashboard_names(dashboard_name, asname_element[0])
+    dashboard_name = asname_element[0] + "_SampleGroup""
     instances = ec2.instances.filter(Filters=[
         {
             "Name": "tag:env",
